@@ -1,6 +1,4 @@
 # epay-go/docker-compose.yml
-version: '3.8'
-
 services:
   # PostgreSQL 数据库
   postgres:
@@ -28,7 +26,7 @@ services:
     image: redis:7-alpine
     container_name: epay-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
     volumes:
       - redis_data:/data
     ports:

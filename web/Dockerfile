@@ -5,8 +5,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # 复制 package.json
-COPY package*.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 
 # 复制源代码并构建
 COPY . .
@@ -14,6 +14,7 @@ RUN npm run build
 
 # 运行阶段
 FROM nginx:alpine
+ENV NODE_ENV=production
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
