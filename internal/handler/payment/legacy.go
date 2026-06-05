@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/example/epay-go/internal/model"
 	"github.com/example/epay-go/internal/service"
@@ -221,16 +220,16 @@ func LegacyAPI(c *gin.Context) {
 		list := make([]gin.H, 0, len(settlements))
 		for _, item := range settlements {
 			list = append(list, gin.H{
-				"settle_no":      item.SettleNo,
-				"money":          item.Amount.StringFixed(2),
-				"fee":            item.Fee.StringFixed(2),
-				"actual_money":   item.ActualAmount.StringFixed(2),
-				"account_type":   item.AccountType,
-				"account_no":     item.AccountNo,
-				"account_name":   item.AccountName,
-				"status":         item.Status,
-				"remark":         item.Remark,
-				"created_at":     item.CreatedAt.Format("2006-01-02 15:04:05"),
+				"settle_no":    item.SettleNo,
+				"money":        item.Amount.StringFixed(2),
+				"fee":          item.Fee.StringFixed(2),
+				"actual_money": item.ActualAmount.StringFixed(2),
+				"account_type": item.AccountType,
+				"account_no":   item.AccountNo,
+				"account_name": item.AccountName,
+				"status":       item.Status,
+				"remark":       item.Remark,
+				"created_at":   item.CreatedAt.Format("2006-01-02 15:04:05"),
 			})
 		}
 
@@ -337,17 +336,17 @@ func createLegacyOrder(c *gin.Context, req *LegacyCreateOrderRequest) (*service.
 	}
 
 	orderResp, err := orderService.Create(context.Background(), &service.CreateOrderRequest{
-		MerchantID:       merchant.ID,
-		OutTradeNo:       req.OutTradeNo,
-		Amount:           amount,
-		Name:             req.Name,
-		PayType:          routing.PayType,
-		NotifyURL:        req.NotifyURL,
+		MerchantID:        merchant.ID,
+		OutTradeNo:        req.OutTradeNo,
+		Amount:            amount,
+		Name:              req.Name,
+		PayType:           routing.PayType,
+		NotifyURL:         req.NotifyURL,
 		MerchantNotifyURL: req.NotifyURL,
-		PlatformBaseURL:  getPaymentBaseURL(c),
-		ReturnURL:        req.ReturnURL,
-		ClientIP:         utils.GetClientIP(c),
-		PayMethod:        routing.PayMethod,
+		PlatformBaseURL:   getPaymentBaseURL(c),
+		ReturnURL:         req.ReturnURL,
+		ClientIP:          utils.GetClientIP(c),
+		PayMethod:         routing.PayMethod,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -391,20 +390,11 @@ func legacyHTML(c *gin.Context, msg string) {
 }
 
 func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *service.CreateOrderResponse) {
-	escapedName := template.HTMLEscapeString(req.Name)
 	escapedAmount := template.HTMLEscapeString(req.Money)
-	escapedTradeNo := template.HTMLEscapeString(orderResp.TradeNo)
 	escapedOutTradeNo := template.HTMLEscapeString(req.OutTradeNo)
-	escapedPayURLHTML := template.HTMLEscapeString(orderResp.PayURL)
-	escapedPayURL := template.JSEscapeString(orderResp.PayURL)
 	statusAPIURL := template.JSEscapeString(getPaymentBaseURL(c) + "/api/pay/status/" + orderResp.TradeNo)
-	escapedReturnURL := template.HTMLEscapeString(req.ReturnURL)
 	escapedReturnURLJS := template.JSEscapeString(req.ReturnURL)
 	qrImageURL := template.HTMLEscapeString("https://api.qrserver.com/v1/create-qr-code/?size=232x232&data=" + url.QueryEscape(orderResp.PayURL))
-	returnSection := ""
-	if strings.TrimSpace(req.ReturnURL) != "" {
-		returnSection = fmt.Sprintf(`<a class="action secondary" href="%s">返回商户页面</a>`, escapedReturnURL)
-	}
 
 	html := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="zh-CN">
@@ -618,14 +608,6 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
             <div class="summary-value amount">¥%s</div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">商品名称</div>
-            <div class="summary-value">%s</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">平台订单号</div>
-            <div class="summary-value">%s</div>
-          </div>
-          <div class="summary-item">
             <div class="summary-label">商户订单号</div>
             <div class="summary-value">%s</div>
           </div>
@@ -635,17 +617,11 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     <section class="pay-box">
       <div class="qr-shell"><img src="%s" alt="支付二维码" /></div>
       <h2 class="pay-title">扫码支付</h2>
-      <p class="pay-desc">如果二维码未显示，请点击下方按钮重新打开支付链接，或复制链接到支持的环境中打开。</p>
+      <p class="pay-desc">请使用手机扫描上方二维码完成支付。支付成功后会自动跳转。</p>
       <div class="status-chip" id="pay-status">等待支付完成</div>
-      <div class="actions">
-        <button class="action primary" type="button" onclick="window.location.href=payUrl">打开支付链接</button>
-        %s
-      </div>
-      <div class="link-box">%s</div>
     </section>
   </div>
   <script>
-    const payUrl = "%s";
     const statusUrl = "%s";
     const returnUrl = "%s";
     const statusEl = document.getElementById('pay-status');
@@ -685,7 +661,7 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     window.setInterval(checkPaymentStatus, 3000);
   </script>
 </body>
-</html>`, escapedAmount, escapedName, escapedTradeNo, escapedOutTradeNo, qrImageURL, returnSection, escapedPayURLHTML, escapedPayURL, statusAPIURL, escapedReturnURLJS)
+</html>`, escapedAmount, escapedOutTradeNo, qrImageURL, statusAPIURL, escapedReturnURLJS)
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(200, html)
