@@ -391,301 +391,165 @@ func legacyHTML(c *gin.Context, msg string) {
 }
 
 func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *service.CreateOrderResponse) {
-	escapedName := template.HTMLEscapeString(req.Name)
 	escapedAmount := template.HTMLEscapeString(req.Money)
 	escapedTradeNo := template.HTMLEscapeString(orderResp.TradeNo)
 	escapedOutTradeNo := template.HTMLEscapeString(req.OutTradeNo)
 	escapedPayURLHTML := template.HTMLEscapeString(orderResp.PayURL)
-	escapedPayURL := template.JSEscapeString(orderResp.PayURL)
 	statusAPIURL := template.JSEscapeString(getPaymentBaseURL(c) + "/api/pay/status/" + orderResp.TradeNo)
 	escapedReturnURL := template.HTMLEscapeString(req.ReturnURL)
 	escapedReturnURLJS := template.JSEscapeString(req.ReturnURL)
-	qrImageURL := template.HTMLEscapeString("https://api.qrserver.com/v1/create-qr-code/?size=232x232&data=" + url.QueryEscape(orderResp.PayURL))
+	qrImageURL := template.HTMLEscapeString("https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" + url.QueryEscape(orderResp.PayURL))
 	returnSection := ""
 	if strings.TrimSpace(req.ReturnURL) != "" {
-		returnSection = fmt.Sprintf(`<a class="action secondary" href="%s">返回商户页面</a>`, escapedReturnURL)
+		returnSection = fmt.Sprintf(`<a class="btn ghost" href="%s">返回商户页面</a>`, escapedReturnURL)
 	}
 
 	html := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>请扫码完成支付</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收银台</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1f4b99 0%%, #0b1220 42%%, #060913 100%%);
-      color: #e5eefc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      background: #f2f3f5;
+      color: #333;
+      font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }
-    .panel {
-      width: 100%%;
-      max-width: 980px;
-      background: rgba(12, 18, 33, 0.92);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 28px;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-      overflow: hidden;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      backdrop-filter: blur(16px);
-    }
-    .hero {
-      padding: 42px;
-      background: linear-gradient(180deg, rgba(59, 130, 246, 0.18) 0%%, rgba(37, 99, 235, 0.05) 100%%);
+    .top {
       display: flex;
-      flex-direction: column;
       justify-content: space-between;
-    }
-    .badge {
-      display: inline-flex;
       align-items: center;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: rgba(37, 99, 235, 0.18);
-      color: #bfdbfe;
-      font-size: 13px;
-      letter-spacing: 0.06em;
-    }
-    .title {
-      margin: 20px 0 10px;
-      font-size: 34px;
-      font-weight: 700;
-      color: #f8fbff;
-    }
-    .subtitle {
-      margin: 0;
-      line-height: 1.75;
-      color: #cbd5e1;
-      font-size: 15px;
-    }
-    .summary {
-      margin-top: 32px;
-      display: grid;
-      gap: 14px;
-    }
-    .summary-item {
-      padding: 16px 18px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.55);
-      border: 1px solid rgba(148, 163, 184, 0.12);
-    }
-    .summary-label {
-      color: #94a3b8;
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .summary-value {
-      color: #f8fafc;
-      font-size: 16px;
-      word-break: break-all;
-    }
-    .summary-value.amount {
-      font-size: 30px;
-      font-weight: 700;
-      color: #7dd3fc;
-    }
-    .pay-box {
-      padding: 42px 32px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%%, rgba(241,245,249,0.98) 100%%);
-      color: #0f172a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .qr-shell {
-      width: 260px;
-      height: 260px;
-      padding: 14px;
+      padding: 14px 20px;
       background: #fff;
-      border-radius: 24px;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .brand { font-size: 16px; font-weight: 600; color: #222; }
+    .safe { font-size: 12px; color: #999; }
+    .card {
+      max-width: 360px;
+      margin: 24px auto 20px;
+      padding: 32px 28px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .channel {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .qr-shell > div,
-    .qr-shell canvas,
-    .qr-shell img {
-      max-width: 100%%;
-      max-height: 100%%;
-    }
-    .pay-title {
-      margin: 24px 0 8px;
-      font-size: 24px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .pay-desc {
-      margin: 0 0 18px;
-      color: #475569;
-      text-align: center;
-      line-height: 1.7;
-    }
-    .status-chip {
-      margin: 0 0 16px;
-      display: inline-flex;
-      align-items: center;
       gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: #e0f2fe;
-      color: #075985;
-      font-size: 13px;
+      margin-bottom: 14px;
+      font-size: 15px;
       font-weight: 600;
+      color: #07c160;
     }
-    .status-chip.success {
-      background: #dcfce7;
-      color: #166534;
+    .amount { text-align: center; font-size: 36px; font-weight: 600; color: #222; margin-bottom: 24px; }
+    .qr {
+      display: block;
+      width: 240px;
+      height: 240px;
+      margin: 0 auto;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 4px;
     }
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 8px;
-    }
-    .action {
-      appearance: none;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      padding: 12px 18px;
-      border-radius: 14px;
+    .status { margin: 18px 0 2px; text-align: center; font-size: 14px; color: #666; }
+    .status.ok { color: #07c160; font-weight: 600; }
+    .tip { margin: 0 0 20px; text-align: center; font-size: 12px; color: #b0b0b0; }
+    .btns { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; }
+    .btn {
+      flex: 1;
+      max-width: 150px;
+      padding: 10px 0;
+      border-radius: 4px;
+      text-align: center;
       font-size: 14px;
-      font-weight: 600;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-    }
-    .action:hover {
-      transform: translateY(-1px);
-    }
-    .action.primary {
-      background: linear-gradient(135deg, #2563eb 0%%, #1d4ed8 100%%);
+      text-decoration: none;
+      background: #07c160;
       color: #fff;
-      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
     }
-    .action.secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-    .link-box {
-      width: 100%%;
-      margin-top: 18px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      color: #475569;
+    .btn:hover { background: #06ad56; }
+    .btn.ghost { background: #fff; color: #555; border: 1px solid #ddd; }
+    .btn.ghost:hover { background: #f7f7f7; }
+    .meta { border-top: 1px solid #f0f0f0; padding-top: 16px; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
       font-size: 12px;
-      line-height: 1.6;
-      word-break: break-all;
     }
-    @media (max-width: 860px) {
-      .panel {
-        grid-template-columns: 1fr;
-      }
-      .hero, .pay-box {
-        padding: 28px 22px;
-      }
-      .title {
-        font-size: 28px;
-      }
-      .qr-shell {
-        width: 220px;
-        height: 220px;
-      }
+    .row .k { color: #999; flex-shrink: 0; }
+    .row .v { color: #555; text-align: right; word-break: break-all; }
+    .row a { color: #576b95; text-decoration: none; }
+    .foot {
+      max-width: 360px;
+      margin: 0 auto 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #b0b0b0;
+      line-height: 1.8;
     }
   </style>
 </head>
 <body>
-  <div class="panel">
-    <section class="hero">
-      <div>
-        <div class="badge">安全支付 · 扫码付款</div>
-        <h1 class="title">请使用微信扫码完成支付</h1>
-        <p class="subtitle">订单已经创建成功，请使用微信扫一扫扫描右侧二维码完成付款。支付成功后，系统会自动通知商户并跳转回业务页面。</p>
-        <div class="summary">
-          <div class="summary-item">
-            <div class="summary-label">支付金额</div>
-            <div class="summary-value amount">¥%s</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">商品名称</div>
-            <div class="summary-value">%s</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">平台订单号</div>
-            <div class="summary-value">%s</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">商户订单号</div>
-            <div class="summary-value">%s</div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="pay-box">
-      <div class="qr-shell"><img src="%s" alt="支付二维码" /></div>
-      <h2 class="pay-title">扫码支付</h2>
-      <p class="pay-desc">如果二维码未显示，请点击下方按钮重新打开支付链接，或复制链接到支持的环境中打开。</p>
-      <div class="status-chip" id="pay-status">等待支付完成</div>
-      <div class="actions">
-        <button class="action primary" type="button" onclick="window.location.href=payUrl">打开支付链接</button>
-        %s
-      </div>
-      <div class="link-box">%s</div>
-    </section>
-  </div>
+  <header class="top">
+    <span class="brand">收银台</span>
+    <span class="safe">安全支付</span>
+  </header>
+  <main class="card">
+    <div class="channel">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="#07c160" aria-hidden="true"><path d="M8.7 4C4.9 4 1.8 6.6 1.8 9.9c0 1.9 1 3.5 2.6 4.6l-.7 2.1 2.4-1.2c.8.2 1.6.4 2.6.4h.5c-.1-.4-.2-.9-.2-1.3 0-3.1 3-5.6 6.7-5.6h.4C15.5 6 12.4 4 8.7 4zm-2.2 3c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.9 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zM22 14.5c0-2.8-2.7-5-6-5s-6 2.2-6 5 2.7 5 6 5c.7 0 1.4-.1 2-.3l2 1-.6-1.7c1.6-.9 2.6-2.3 2.6-4zm-8-.6c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8zm4 0c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
+      <span>微信支付</span>
+    </div>
+    <div class="amount">¥%s</div>
+    <img class="qr" src="%s" alt="支付二维码">
+    <p class="status" id="pay-status">正在等待支付结果…</p>
+    <p class="tip">请使用微信「扫一扫」扫描二维码完成付款</p>
+    <div class="btns">
+      <a class="btn" href="%s">打开支付链接</a>
+      %s
+    </div>
+    <div class="meta">
+      <div class="row"><span class="k">平台订单号</span><span class="v">%s</span></div>
+      <div class="row"><span class="k">商户订单号</span><span class="v">%s</span></div>
+    </div>
+  </main>
+  <footer class="foot">
+    支付完成后将自动跳转回商户页面，如有疑问请联系商户客服。<br>
+    付款前请核对订单金额与商品信息，谨防诈骗。
+  </footer>
   <script>
-    const payUrl = "%s";
     const statusUrl = "%s";
     const returnUrl = "%s";
-    const statusEl = document.getElementById('pay-status');
+    const statusEl = document.getElementById("pay-status");
     let redirected = false;
 
-    async function checkPaymentStatus() {
-      if (redirected) {
-        return;
-      }
+    setInterval(async function () {
+      if (redirected) return;
       try {
-        const response = await fetch(statusUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          cache: 'no-store'
-        });
-        const result = await response.json();
-        if (result && result.code === 0 && result.data && result.data.paid) {
+        const res = await fetch(statusUrl, { cache: "no-store" });
+        const data = await res.json();
+        if (data && data.code === 0 && data.data && data.data.paid) {
           redirected = true;
-          statusEl.textContent = '支付成功，正在跳转...';
-          statusEl.classList.add('success');
-          window.setTimeout(function () {
-            if (returnUrl) {
-              window.location.href = returnUrl;
-              return;
-            }
-            window.location.reload();
+          statusEl.textContent = "支付成功，正在跳转…";
+          statusEl.classList.add("ok");
+          setTimeout(function () {
+            window.location.href = returnUrl || location.href;
           }, 1200);
-          return;
         }
-        statusEl.textContent = '等待支付完成';
-      } catch (error) {
-        statusEl.textContent = '支付状态检查中...';
-      }
-    }
-
-    checkPaymentStatus();
-    window.setInterval(checkPaymentStatus, 3000);
+      } catch (e) { /* 网络异常，等下一轮轮询 */ }
+    }, 3000);
   </script>
 </body>
-</html>`, escapedAmount, escapedName, escapedTradeNo, escapedOutTradeNo, qrImageURL, returnSection, escapedPayURLHTML, escapedPayURL, statusAPIURL, escapedReturnURLJS)
+</html>`,
+		escapedAmount, qrImageURL,
+		escapedPayURLHTML, returnSection,
+		escapedTradeNo, escapedOutTradeNo,
+		statusAPIURL, escapedReturnURLJS)
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(200, html)
