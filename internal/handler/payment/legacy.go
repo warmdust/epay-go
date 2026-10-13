@@ -430,7 +430,7 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     }
     .card {
       width: 360px;
-      max-width: 100%;
+      max-width: 100%%;
       padding: 28px;
       background: #fff;
       border-radius: 8px;
@@ -479,7 +479,7 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     .check b {
       width: 56px;
       height: 56px;
-      border-radius: 50%;
+      border-radius: 50%%;
       background: #07c160;
       color: #fff;
       font-size: 30px;
@@ -492,7 +492,7 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
       width: 8px;
       height: 8px;
       margin-right: 6px;
-      border-radius: 50%;
+      border-radius: 50%%;
       background: #07c160;
       animation: pulse 1.2s ease-in-out infinite;
     }
