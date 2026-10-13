@@ -414,24 +414,24 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     * { box-sizing: border-box; }
     body {
       margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
       background: #f2f3f5;
       color: #333;
       font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }
-    .top {
+    .main {
+      flex: 1;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 14px 20px;
-      background: #fff;
-      border-bottom: 1px solid #e8e8e8;
+      justify-content: center;
+      padding: 24px 16px;
     }
-    .brand { font-size: 16px; font-weight: 600; color: #222; }
-    .safe { font-size: 12px; color: #999; }
     .card {
-      max-width: 360px;
-      margin: 24px auto 20px;
-      padding: 32px 28px;
+      width: 360px;
+      max-width: 100%;
+      padding: 28px;
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -441,28 +441,68 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       font-size: 15px;
       font-weight: 600;
       color: #07c160;
     }
-    .amount { text-align: center; font-size: 36px; font-weight: 600; color: #222; margin-bottom: 24px; }
+    .amount { text-align: center; font-size: 36px; font-weight: 600; color: #222; margin-bottom: 20px; }
+    .qr-box { position: relative; width: 240px; margin: 0 auto; }
     .qr {
       display: block;
       width: 240px;
       height: 240px;
-      margin: 0 auto;
       padding: 8px;
       border: 1px solid #eee;
       border-radius: 4px;
     }
-    .status { margin: 18px 0 2px; text-align: center; font-size: 14px; color: #666; }
+    .qr-box i { position: absolute; width: 18px; height: 18px; border: 0 solid #07c160; }
+    .qr-box i.tl { top: -2px; left: -2px; border-top-width: 2px; border-left-width: 2px; }
+    .qr-box i.tr { top: -2px; right: -2px; border-top-width: 2px; border-right-width: 2px; }
+    .qr-box i.bl { bottom: -2px; left: -2px; border-bottom-width: 2px; border-left-width: 2px; }
+    .qr-box i.br { bottom: -2px; right: -2px; border-bottom-width: 2px; border-right-width: 2px; }
+    .check {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .qr-box.paid .check { opacity: 1; }
+    .check b {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #07c160;
+      color: #fff;
+      font-size: 30px;
+      line-height: 56px;
+      text-align: center;
+    }
+    .status { margin: 16px 0 2px; text-align: center; font-size: 14px; color: #666; }
+    .status .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 6px;
+      border-radius: 50%;
+      background: #07c160;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
     .status.ok { color: #07c160; font-weight: 600; }
-    .tip { margin: 0 0 20px; text-align: center; font-size: 12px; color: #b0b0b0; }
-    .btns { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; }
+    .status.ok .dot { display: none; }
+    @keyframes pulse { 0%%, 100%% { opacity: 1; } 50%% { opacity: 0.25; } }
+    .tip { margin: 0 0 16px; text-align: center; font-size: 12px; color: #b0b0b0; }
+    .btns { display: flex; gap: 10px; margin-bottom: 20px; }
     .btn {
       flex: 1;
-      max-width: 150px;
       padding: 10px 0;
       border-radius: 4px;
       text-align: center;
@@ -486,41 +526,45 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
     .row .v { color: #555; text-align: right; word-break: break-all; }
     .row a { color: #576b95; text-decoration: none; }
     .foot {
-      max-width: 360px;
-      margin: 0 auto 32px;
+      padding: 0 16px 24px;
       text-align: center;
       font-size: 12px;
       color: #b0b0b0;
       line-height: 1.8;
     }
+    @media (max-width: 400px) {
+      .qr-box { width: 200px; }
+      .qr { width: 200px; height: 200px; }
+    }
   </style>
 </head>
 <body>
-  <header class="top">
-    <span class="brand">收银台</span>
-    <span class="safe">安全支付</span>
-  </header>
-  <main class="card">
-    <div class="channel">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="#07c160" aria-hidden="true"><path d="M8.7 4C4.9 4 1.8 6.6 1.8 9.9c0 1.9 1 3.5 2.6 4.6l-.7 2.1 2.4-1.2c.8.2 1.6.4 2.6.4h.5c-.1-.4-.2-.9-.2-1.3 0-3.1 3-5.6 6.7-5.6h.4C15.5 6 12.4 4 8.7 4zm-2.2 3c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.9 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zM22 14.5c0-2.8-2.7-5-6-5s-6 2.2-6 5 2.7 5 6 5c.7 0 1.4-.1 2-.3l2 1-.6-1.7c1.6-.9 2.6-2.3 2.6-4zm-8-.6c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8zm4 0c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
-      <span>微信支付</span>
-    </div>
-    <div class="amount">¥%s</div>
-    <img class="qr" src="%s" alt="支付二维码">
-    <p class="status" id="pay-status">正在等待支付结果…</p>
-    <p class="tip">请使用微信「扫一扫」扫描二维码完成付款</p>
-    <div class="btns">
-      <a class="btn" href="%s">打开支付链接</a>
-      %s
-    </div>
-    <div class="meta">
-      <div class="row"><span class="k">平台订单号</span><span class="v">%s</span></div>
-      <div class="row"><span class="k">商户订单号</span><span class="v">%s</span></div>
+  <main class="main">
+    <div class="card">
+      <div class="channel">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="#07c160" aria-hidden="true"><path d="M8.7 4C4.9 4 1.8 6.6 1.8 9.9c0 1.9 1 3.5 2.6 4.6l-.7 2.1 2.4-1.2c.8.2 1.6.4 2.6.4h.5c-.1-.4-.2-.9-.2-1.3 0-3.1 3-5.6 6.7-5.6h.4C15.5 6 12.4 4 8.7 4zm-2.2 3c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.9 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zM22 14.5c0-2.8-2.7-5-6-5s-6 2.2-6 5 2.7 5 6 5c.7 0 1.4-.1 2-.3l2 1-.6-1.7c1.6-.9 2.6-2.3 2.6-4zm-8-.6c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8zm4 0c-.4 0-.8-.3-.8-.8s.4-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
+        <span>微信支付</span>
+      </div>
+      <div class="amount">¥%s</div>
+      <div class="qr-box" id="qr-box">
+        <img class="qr" src="%s" alt="支付二维码">
+        <i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div class="check"><b>✓</b></div>
+      </div>
+      <p class="status" id="pay-status"><span class="dot"></span>正在等待支付结果…</p>
+      <p class="tip">请使用微信「扫一扫」扫描二维码完成付款</p>
+      <div class="btns">
+        <a class="btn" href="%s">打开支付链接</a>
+        %s
+      </div>
+      <div class="meta">
+        <div class="row"><span class="k">平台订单号</span><span class="v">%s</span></div>
+        <div class="row"><span class="k">商户订单号</span><span class="v">%s</span></div>
+      </div>
     </div>
   </main>
   <footer class="foot">
-    支付完成后将自动跳转回商户页面，如有疑问请联系商户客服。<br>
-    付款前请核对订单金额与商品信息，谨防诈骗。
+    支付完成后将自动跳转回商户页面 · 付款前请核对订单信息，谨防诈骗
   </footer>
   <script>
     const statusUrl = "%s";
@@ -535,6 +579,7 @@ func legacyQRCodePage(c *gin.Context, req *LegacyCreateOrderRequest, orderResp *
         const data = await res.json();
         if (data && data.code === 0 && data.data && data.data.paid) {
           redirected = true;
+          document.getElementById("qr-box").classList.add("paid");
           statusEl.textContent = "支付成功，正在跳转…";
           statusEl.classList.add("ok");
           setTimeout(function () {
