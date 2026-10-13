@@ -5,7 +5,7 @@ import type { ApiResponse, PageData, Merchant, Order, Settlement, BalanceRecord,
  const merchantApiBase = '/api/merchant'
 
 // 注册
-export function register(data: { username: string; password: string; email?: string; phone?: string }) {
+export function register(data: { reg_code: string; username: string; password: string; email?: string; phone?: string }) {
   return request.post<any, ApiResponse>(`${merchantApiBase}/auth/register`, data)
 }
 

@@ -2,12 +2,21 @@
 package merchant
 
 import (
+	"os"
+
 	"github.com/example/epay-go/internal/service"
 	"github.com/example/epay-go/pkg/jwt"
 	"github.com/example/epay-go/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
+// registerCode 商户注册口令，可通过环境变量 REGISTER_CODE 覆盖
+func registerCode() string {
+	if code := os.Getenv("REGISTER_CODE"); code != "" {
+		return code
+	}
+	return "gzdzl123"
+}
 
 // RegisterRequest 注册请求
 type RegisterRequest struct {
@@ -15,6 +24,7 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6,max=32"`
 	Email    string `json:"email" binding:"omitempty,email"`
 	Phone    string `json:"phone" binding:"omitempty"`
+	RegCode  string `json:"reg_code" binding:"required"`
 }
 
 // Register 商户注册
@@ -22,6 +32,11 @@ func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ParamError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	if req.RegCode != registerCode() {
+		response.ParamError(c, "注册密码错误")
 		return
 	}
 

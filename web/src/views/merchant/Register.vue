@@ -4,6 +4,9 @@
     <div class="login-box">
       <h2>商户注册</h2>
       <a-form :model="form" @submit="handleSubmit" layout="vertical">
+        <a-form-item field="reg_code" label="注册密码" :rules="[{ required: true, message: '请输入注册密码' }]">
+          <a-input-password v-model="form.reg_code" placeholder="请向管理员获取注册密码" size="large" />
+        </a-form-item>
         <a-form-item field="username" label="用户名" :rules="[{ required: true, message: '请输入用户名' }, { minLength: 4, message: '用户名至少4个字符' }]">
           <a-input v-model="form.username" placeholder="请输入用户名" size="large" />
         </a-form-item>
@@ -39,6 +42,7 @@ const router = useRouter()
 const loading = ref(false)
 
 const form = reactive({
+  reg_code: '',
   username: '',
   password: '',
   email: '',
